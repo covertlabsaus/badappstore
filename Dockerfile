@@ -1,16 +1,17 @@
 # ---- build the static site ----
-FROM klakegg/hugo:0.127.0-ext-alpine AS build
+FROM gohugoio/hugo:ext-alpine AS build
+# If you want to pin a version later, switch to e.g.:
+# FROM gohugoio/hugo:0.147.0-ext-alpine
+
 WORKDIR /src
 COPY . /src
-# If you set baseURL in hugo.yaml, this is enough:
-RUN hugo --gc --minify
-# If you prefer to override at build time, you could instead:
-# ARG BASE_URL
-# RUN hugo --gc --minify -b ${BASE_URL}
+
+# For Hextra (Hugo Modules), make sure modules are fetched
+# (git is present in the hugo:ext-alpine image)
+RUN hugo mod get -u && hugo --gc --minify
 
 # ---- serve with nginx ----
 FROM nginx:alpine
-# (Optional) smaller, stricter Nginx config
 RUN rm -rf /usr/share/nginx/html/*
 COPY --from=build /src/public /usr/share/nginx/html
 EXPOSE 80
